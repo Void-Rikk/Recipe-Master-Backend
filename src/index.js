@@ -2,8 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
-import recipeRouter from "./recipe-router.js";
-
+import recipeRouter from "./routers/recipe-router.js";
+import authRouter from "./routers/auth-router.js";
 
 dotenv.config();
 
@@ -14,9 +14,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api", recipeRouter);
+app.use("/api", authRouter);
 
 function startApp() {
-    app.listen(PORT, () => console.log(`SERVER STARTED AT PORT: ${PORT}`));
+    app.listen(PORT, () => {
+        console.log(`SERVER STARTED AT PORT: ${PORT}`);
+    });
 }
 
 startApp();

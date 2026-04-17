@@ -8,6 +8,8 @@ CREATE TABLE users
     avatar_id  VARCHAR(36) UNIQUE
 );
 
+CREATE UNIQUE INDEX idx_users_name ON users(first_name, last_name);
+
 CREATE TABLE recipes
 (
     id          SERIAL PRIMARY KEY,
