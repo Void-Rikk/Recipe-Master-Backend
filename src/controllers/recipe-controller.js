@@ -1,15 +1,29 @@
+import RecipeModel from "../models/recipe-model.js";
 
 
 class RecipeController {
+    async create(req, res) {
+        const { title, description, image, ingredients, instructions } = req.body;
+
+
+    }
+
     async getAll(req, res) {
+        const userId = req.query.uid;
+
         try {
-            const recipes = await new Promise((res, rej) => {
-                setTimeout(() => res([]), 1000);
-            });
-            return res.json(recipes);
+            let result;
+            if (userId !== undefined) {
+                return res.status(200).json({ "poka": "ne dodelal" });
+                // result = await RecipeModel.getAllRecipesWithLiked(userId);
+            }
+            else {
+                result = await RecipeModel.getAllRecipes();
+                return res.status(200).json(result.rows);
+            }
         }
         catch (e) {
-            res.status(500).json(e);
+            return res.status(500).json("Internal Server Error");
         }
     }
 }
