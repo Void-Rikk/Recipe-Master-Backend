@@ -9,21 +9,46 @@ class RecipeController {
     }
 
     async getAll(req, res) {
-        const userId = req.query.uid;
-
         try {
-            let result;
-            if (userId !== undefined) {
-                return res.status(200).json({ "poka": "ne dodelal" });
-                // result = await RecipeModel.getAllRecipesWithLiked(userId);
-            }
-            else {
-                result = await RecipeModel.getAllRecipes();
-                return res.status(200).json(result.rows);
-            }
+            const result = await RecipeModel.getAllRecipes();
+            return res.status(200).json(result.rows);
         }
         catch (e) {
             return res.status(500).json("Internal Server Error");
+        }
+    }
+
+    async getAllWithLikes(req, res) {
+        const { userId } = req.params;
+
+        try {
+            const result = await RecipeModel.getAllRecipesWithLiked(userId);
+
+            const likesMap = {};
+            result.likes.forEach(row => {
+                likesMap[row.recipe_id] = true;
+            })
+
+            return res.status(200).json({ recipes: result.recipes, likes: likesMap });
+        }
+        catch (e) {
+            return res.status(400).json({ error: e.message });
+        }
+    }
+
+    async toggleLike(req, res) {
+        const { userId, recipeId, likeState } = req.body;
+
+        if (!userId || !recipeId || likeState === undefined) {
+            return res.status(400).json({ error: "Missing required data"});
+        }
+
+        try {
+            const result = await RecipeModel.toggleLike(userId, recipeId, likeState);
+            return res.status(200).json({ ...result, likeState: !likeState});
+        }
+        catch (e) {
+            return res.status(500).json({ error: e.message });
         }
     }
 }
