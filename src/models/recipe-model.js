@@ -6,19 +6,23 @@ class RecipeModel {
 
     }
 
-    async getAllRecipes() {
-        const text = 'SELECT r.id, r.name, r.user_id, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id JOIN likes l ON r.id = l.recipe_id GROUP BY r.id, r.name, r.user_id, r.name, r.id, u.first_name, u.last_name;';
+    async getAllRecipes(searchQuery='') {
+        searchQuery += '%';
+        const text = `SELECT r.id, r.name, r.user_id, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, r.name, r.user_id, r.name, r.id, u.first_name, u.last_name;`;
+        const values = [searchQuery];
 
-        return await db.query(text);
+        return await db.query(text, values);
     }
 
-    async getAllRecipesWithLiked(userId) {
+    async getAllRecipesWithLiked(userId, searchQuery='') {
+        searchQuery += '%'
         const likesValues = [userId];
         const likesText = 'SELECT recipe_id FROM likes WHERE user_id = $1';
 
-        const recipesText = 'SELECT r.id, r.name, r.user_id, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id JOIN likes l ON r.id = l.recipe_id GROUP BY r.id, r.name, r.user_id, r.name, r.id, u.first_name, u.last_name;';
+        const recipesValues = [searchQuery];
+        const recipesText = 'SELECT r.id, r.name, r.user_id, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, r.name, r.user_id, r.name, r.id, u.first_name, u.last_name;';
 
-        const recipes = await db.query(recipesText);
+        const recipes = await db.query(recipesText, recipesValues);
         const likes = await db.query(likesText, likesValues);
 
         return { recipes: recipes.rows, likes: likes.rows };
