@@ -8,16 +8,17 @@ CREATE TABLE users
     avatar_id  VARCHAR(36) UNIQUE
 );
 
-CREATE UNIQUE INDEX idx_users_name ON users(first_name, last_name);
+CREATE UNIQUE INDEX idx_users_name ON users (first_name, last_name);
 
 CREATE TABLE recipes
 (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(200) NOT NULL,
-    description TEXT         NOT NULL,
-    image_id    VARCHAR(36) UNIQUE,
-    user_id     INT          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(200) NOT NULL,
+    description     TEXT         NOT NULL,
+    image_id        VARCHAR(36) UNIQUE,
+    image_extension VARCHAR(5),
+    user_id         INT          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ingredients

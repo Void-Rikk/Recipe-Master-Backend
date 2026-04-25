@@ -5,11 +5,12 @@ class RecipeController {
     async create(req, res) {
         const { name, description, ingredients, instructions, user_id } = req.body;
         const image_id = req.image_id;
+        const image_extension = req.image_extension;
         const parsedIngredients = JSON.parse(ingredients);
         const parsedInstructions = JSON.parse(instructions);
 
         try {
-            const result = await RecipeModel.createRecipe(name, description, image_id, parsedIngredients, parsedInstructions, user_id);
+            const result = await RecipeModel.createRecipe(name, description, image_id, image_extension, parsedIngredients, parsedInstructions, user_id);
 
             return res.status(200).json(result);
         }

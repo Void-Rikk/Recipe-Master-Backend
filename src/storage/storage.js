@@ -9,9 +9,11 @@ const storage = multer.diskStorage({
     filename: (req, file, callback) => {
         const uuid = uuidv4();
 
-        req.image_id = uuid;
-
         const ext = path.extname(file.originalname);
+
+        req.image_id = uuid;
+        req.image_extension = ext;
+
         callback(null, uuid + ext);
     }
 });
