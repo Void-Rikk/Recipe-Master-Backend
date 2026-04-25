@@ -1,10 +1,11 @@
 import { Router } from "express";
 import RecipeController from "../controllers/recipe-controller.js";
+import { recipeImages } from "../storage/storage.js";
 
 const recipeRouter = new Router();
 
 
-recipeRouter.post("/createRecipe", RecipeController.create);
+recipeRouter.post("/createRecipe", recipeImages.single("image"), RecipeController.create);
 recipeRouter.get("/getRecipes", RecipeController.getAll);
 recipeRouter.get("/getRecipes/:userId", RecipeController.getAllWithLikes.bind(RecipeController));
 recipeRouter.post("/toggleLike", RecipeController.toggleLike);
