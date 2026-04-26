@@ -11,8 +11,10 @@
 
 ### Libs
 
-- pg
-- dotenv
-- bcrypt
-- cors
-- nodemon
+- pg (PostgreSQL client for Node.js)
+- dotenv (Environmental variables)
+- bcrypt (Passwords encryption)
+- cors (Cross-Origin Resource Sharing)
+- nodemon (Dev server)
+- uuid (Unique id generation)
+- multer (Middleware for uploading files)
