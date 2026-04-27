@@ -81,7 +81,7 @@ class RecipeModel {
 
         const values = [recipeId];
 
-        const recipeText = 'SELECT r.name, r.description, r.image_id, r.image_extension, u.id, u.first_name, u.last_name, COUNT(l.user_id)::INT as likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id = $1 GROUP BY r.id, u.id;';
+        const recipeText = 'SELECT r.name, r.description, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT as likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id = $1 GROUP BY r.id, u.id;';
         const ingredientsText = 'SELECT i.id, i.description FROM ingredients i WHERE i.recipe_id = $1;';
         const instructionsText = 'SELECT i.id, i.description, i.display_order FROM instructions i WHERE i.recipe_id = $1;';
 
@@ -98,6 +98,19 @@ class RecipeModel {
             ingredients: ingredients.rows,
             instructions: instructions.rows,
         };
+    }
+
+    async getExactLikeState(userId, recipeId) {
+        if (!userId || !recipeId) {
+            throw new Error("Missing required data");
+        }
+
+        const values = [userId, recipeId];
+        const text = 'SELECT * FROM likes WHERE user_id = $1 AND recipe_id = $2;';
+
+        const result = await db.query(text, values);
+
+        return !!result.rows.length;
     }
 }
 

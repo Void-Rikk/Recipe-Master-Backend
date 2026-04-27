@@ -115,6 +115,21 @@ class RecipeController {
         }
     }
 
+    async getExactLikeState(req, res) {
+        const { userId, recipeId } = req.params;
+
+        try {
+            const result = await RecipeModel.getExactLikeState(userId, recipeId);
+            return res.status(200).json({ state: result });
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: e.message });
+        }
+    }
+
     _createLikesMap(likes) {
         const likesMap = {};
         likes.forEach(row => {
