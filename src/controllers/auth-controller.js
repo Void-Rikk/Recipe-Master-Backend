@@ -1,4 +1,5 @@
 import AuthModel from "../models/auth-model.js";
+import { validateAuth, ValidationError } from "../utils/utils.js";
 
 
 class AuthController {
@@ -6,11 +7,16 @@ class AuthController {
         const { first_name, last_name, password } = req.body;
 
         try {
+            validateAuth(first_name, last_name, password);
+
             const result = await AuthModel.loginUser(first_name, last_name, password);
 
             return res.status(200).json(result);
         }
         catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
             if (e.message === "Invalid name/password") {
                 return res.status(401).json({ error: e.message });
             }
@@ -22,11 +28,16 @@ class AuthController {
         const { first_name, last_name, password } = req.body;
 
         try {
+            validateAuth(first_name, last_name, password);
+
             const result = await AuthModel.createUser(first_name, last_name, password);
 
             return res.status(201).json(result.rows[0]);
         }
         catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
             if (e.message === "User already exists") {
                 return res.status(409).json({ error: "User already exists" });
             }
