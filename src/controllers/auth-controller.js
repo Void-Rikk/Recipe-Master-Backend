@@ -1,5 +1,6 @@
 import AuthModel from "../models/auth-model.js";
-import { validateAuth, ValidationError } from "../utils/utils.js";
+import { ValidationError } from "../utils/errors.js";
+import { validateAuth } from "../utils/utils.js";
 
 
 class AuthController {

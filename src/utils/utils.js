@@ -1,8 +1,4 @@
-export class ValidationError extends Error {
-    constructor(message) {
-        super(message);
-    }
-}
+import { ValidationError } from "./errors.js";
 
 export function validateAuth(first_name, last_name, password) {
     if (!first_name || !last_name || !password) {
@@ -16,5 +12,11 @@ export function validateAuth(first_name, last_name, password) {
     }
     else if (password.length < 8) {
         throw new ValidationError("Password must contain at least 8 characters");
+    }
+}
+
+export function validateRecipeCreation(name, description, image_id, image_extension, ingredients, instructions, user_id) {
+    if (!name || !description || !image_id || !image_extension || !ingredients.length || !instructions.length || !user_id) {
+        throw new ValidationError("Missing required fields");
     }
 }

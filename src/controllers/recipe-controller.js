@@ -1,4 +1,5 @@
 import RecipeModel from "../models/recipe-model.js";
+import { NoRecipeError, ValidationError } from "../utils/errors.js";
 
 
 class RecipeController {
@@ -15,7 +16,10 @@ class RecipeController {
             return res.status(200).json(result);
         }
         catch (e) {
-            res.status(400).json({ error: e.message });
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
         }
     }
 
@@ -25,7 +29,7 @@ class RecipeController {
             return res.status(200).json(result.rows);
         }
         catch (e) {
-            return res.status(500).json("Internal Server Error");
+            return res.status(500).json("Internal server error");
         }
     }
 
@@ -40,23 +44,25 @@ class RecipeController {
             return res.status(200).json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
-            return res.status(400).json({ error: e.message });
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
         }
     }
 
     async toggleLike(req, res) {
         const { userId, recipeId, likeState } = req.body;
 
-        if (!userId || !recipeId || likeState === undefined) {
-            return res.status(400).json({ error: "Missing required data"});
-        }
-
         try {
             const result = await RecipeModel.toggleLike(userId, recipeId, likeState);
             return res.status(200).json({ ...result, likeState: !likeState});
         }
         catch (e) {
-            return res.status(500).json({ error: e.message });
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
         }
     }
 
@@ -84,7 +90,28 @@ class RecipeController {
             return res.status(200).json({ ...result, likes: likesMap });
         }
         catch (e) {
-            return res.status(400).json({ error: e.message });
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
+    async getRecipeById(req, res) {
+        const { recipeId } = req.params;
+
+        try {
+            const result = await RecipeModel.getRecipeById(recipeId);
+            return res.status(200).json(result);
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            else if (e instanceof NoRecipeError) {
+                return res.status(404).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
         }
     }
 
