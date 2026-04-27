@@ -20,3 +20,12 @@ export function validateRecipeCreation(name, description, image_id, image_extens
         throw new ValidationError("Missing required fields");
     }
 }
+
+export function validateCommentUploading(recipeId, userId, content) {
+    if (!recipeId || !userId || !content) {
+        throw new ValidationError("Missing required data");
+    }
+    if (content.length === 0) {
+        throw new ValidationError("Comment text can`t be empty");
+    }
+}
