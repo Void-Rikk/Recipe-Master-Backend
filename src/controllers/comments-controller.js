@@ -5,7 +5,18 @@ import { ValidationError } from "../utils/errors.js";
 class CommentsController {
 
     async getComments(req, res) {
+        const { recipeId } = req.params;
 
+        try {
+            const result = await CommentsModel.getComments(recipeId);
+            return res.status(200).json(result.rows);
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
     }
 
     async uploadComment(req, res) {
