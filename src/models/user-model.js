@@ -10,7 +10,7 @@ class UserModel {
         }
 
         const values = [userId];
-        const text = 'SELECT u.first_name, u.last_name, u.bio, u.avatar_id, u.avatar_extension, COUNT(r) FROM users u LEFT JOIN recipes r ON r.user_id = u.id WHERE u.id = $1 GROUP BY u.first_name, u.last_name, u.bio, u.avatar_id, u.avatar_extension;'
+        const text = 'SELECT u.first_name, u.last_name, u.bio, u.avatar_id, u.avatar_extension, COUNT(r) as recipes_count FROM users u LEFT JOIN recipes r ON r.user_id = u.id WHERE u.id = $1 GROUP BY u.first_name, u.last_name, u.bio, u.avatar_id, u.avatar_extension;'
 
         const userInfo = await db.query(text, values);
         if (!userInfo.rows.length) {

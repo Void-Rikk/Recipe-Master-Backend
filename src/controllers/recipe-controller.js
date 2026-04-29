@@ -130,6 +130,54 @@ class RecipeController {
         }
     }
 
+    async getRecipesByUserId(req, res) {
+        const { userId } = req.params;
+
+        try {
+            const result = await RecipeModel.getRecipesByUserId(userId);
+            return res.status(200).json(result.rows);
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
+    async getRecipesByUserIdWithLikes(req, res) {
+        const { userId, currentUserId } = req.params;
+
+        try {
+            const result = await RecipeModel.getRecipesByUserIdWithLikes(userId, currentUserId);
+
+            const likesMap = this._createLikesMap(result.likes);
+
+            return res.status(200).json({ recipes: result.recipes, likes: likesMap });
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
+    async getRecipesLikedByUser(req, res) {
+        const { userId } = req.params;
+
+        try {
+            const result = await RecipeModel.getRecipesLikedByUser(userId);
+            return res.status(200).json(result.rows);
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
     _createLikesMap(likes) {
         const likesMap = {};
         likes.forEach(row => {

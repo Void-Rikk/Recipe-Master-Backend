@@ -112,6 +112,45 @@ class RecipeModel {
 
         return !!result.rows.length;
     }
+
+    async getRecipesByUserId(userId) {
+        if (!userId) {
+            throw new ValidationError("Missing required data");
+        }
+
+        const values = [userId];
+        const text = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+
+        return await db.query(text, values);
+    }
+
+    async getRecipesByUserIdWithLikes(userId, currentUserId) {
+        if (!userId || !currentUserId) {
+            throw new ValidationError("Missing required data");
+        }
+
+        const likesValues = [currentUserId];
+        const likesText = 'SELECT recipe_id FROM likes WHERE user_id = $1';
+
+        const recipesValues = [userId];
+        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+
+        const recipes = await db.query(recipesText, recipesValues);
+        const likes = await db.query(likesText, likesValues);
+
+        return { recipes: recipes.rows, likes: likes.rows };
+    }
+
+    async getRecipesLikedByUser(userId) {
+        if (!userId) {
+            throw new ValidationError("Missing required data");
+        }
+
+        const values = [userId];
+        const text = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id IN (SELECT l2.recipe_id FROM likes l2 WHERE l2.user_id = $1) GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+
+        return await db.query(text, values);
+    }
 }
 
 export default new RecipeModel();
