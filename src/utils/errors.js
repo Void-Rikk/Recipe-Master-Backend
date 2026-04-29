@@ -9,3 +9,9 @@ export class NoRecipeError extends Error {
         super(message);
     }
 }
+
+export class NoUserError extends Error {
+    constructor(message) {
+        super(message);
+    }
+}

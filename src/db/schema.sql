@@ -5,7 +5,8 @@ CREATE TABLE users
     last_name  VARCHAR(50)  NOT NULL,
     bio        TEXT,
     password   VARCHAR(255) NOT NULL,
-    avatar_id  VARCHAR(36) UNIQUE
+    avatar_id  VARCHAR(36) UNIQUE,
+    avatar_extension VARCHAR(5)
 );
 
 CREATE UNIQUE INDEX idx_users_name ON users (first_name, last_name);
