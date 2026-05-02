@@ -29,3 +29,9 @@ export function validateCommentUploading(recipeId, userId, content) {
         throw new ValidationError("Comment text can`t be empty");
     }
 }
+
+export function validateUserUpdate(userId, first_name, last_name, bio, image_id, image_extension) {
+    if (!userId || !first_name || !last_name || !bio || !image_id || !image_extension) {
+        throw new ValidationError("Missing required fields");
+    }
+}

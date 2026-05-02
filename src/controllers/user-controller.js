@@ -21,6 +21,27 @@ class UserController {
             return res.status(500).json({ error: "Internal server error" });
         }
     }
+
+    async updateUser(req, res) {
+        const { userId } = req.params;
+        const { first_name, last_name, bio } = req.body;
+        const image_id = req.image_id
+        const image_extension = req.image_extension;
+
+        try {
+            const result = await UserModel.updateUser(userId, first_name, last_name, bio, image_id, image_extension);
+            return res.status(200).json({ status: "success" });
+        }
+        catch (e) {
+            if (e instanceof ValidationError) {
+                return res.status(400).json({ error: e.message });
+            }
+            else if (e instanceof NoUserError) {
+                return res.status(404).json({ error: e.message });
+            }
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
 }
 
 export default new UserController();

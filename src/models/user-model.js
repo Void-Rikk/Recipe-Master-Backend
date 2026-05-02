@@ -1,5 +1,6 @@
 import { NoUserError, ValidationError } from "../utils/errors.js";
 import { db } from "../db/db.js";
+import { validateUserUpdate } from "../utils/utils.js";
 
 
 class UserModel {
@@ -18,6 +19,24 @@ class UserModel {
         }
 
         return userInfo.rows[0];
+    }
+
+    async updateUser(userId, first_name, last_name, bio, image_id, image_extension) {
+        validateUserUpdate(userId, first_name, last_name, bio, image_id, image_extension);
+
+        const values = [userId];
+
+        const checkText = 'SELECT id FROM users WHERE id = $1';
+        const checkResult = await db.query(checkText, values);
+
+        if (!checkResult.rows.length) {
+            throw new NoUserError(`There is no user with ${userId} id`);
+        }
+
+        const updateValues = [first_name, last_name, bio, image_id, image_extension, userId];
+        const updateText = 'UPDATE users SET first_name = $1, last_name = $2, bio = $3, avatar_id = $4, avatar_extension = $5 WHERE id = $6';
+
+        return db.query(updateText, updateValues);
     }
 }
 
