@@ -5,13 +5,14 @@ import { recipeImages } from "../storage/storage.js";
 
 const recipeRouter = new Router();
 
-// Recipe page
-recipeRouter.get("/recipes/:recipeId", RecipeController.getRecipeById);
-recipeRouter.get("/like/:userId/:recipeId", RecipeController.getExactLikeState);
 
 // Home page
 recipeRouter.get("/recipes", RecipeController.getAll.bind(RecipeController));
-recipeRouter.get("/recipes/search/:query", RecipeController.searchRecipes.bind(RecipeController));
+recipeRouter.post("/recipes/search", RecipeController.searchRecipes.bind(RecipeController));
+
+// Recipe page
+recipeRouter.get("/recipes/:recipeId", RecipeController.getRecipeById);
+recipeRouter.get("/like/:userId/:recipeId", RecipeController.getExactLikeState);
 
 // User page
 recipeRouter.get("/recipes/user/:userId", RecipeController.getRecipesByUserId.bind(RecipeController));

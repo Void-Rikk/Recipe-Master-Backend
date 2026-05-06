@@ -69,11 +69,10 @@ class RecipeController {
     }
 
     async searchRecipes(req, res) {
-        const { query } = req.params;
-        const { userId } = req.query;
+        const { searchQuery, userId } = req.body;
 
         try {
-            const result = await RecipeModel.getAllRecipes(userId, query);
+            const result = await RecipeModel.getAllRecipes(userId, searchQuery);
 
             const likesMap = this._createLikesMap(result.likes);
 
