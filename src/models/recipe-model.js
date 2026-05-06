@@ -1,5 +1,5 @@
 import { db } from "../db/db.js";
-import { NoRecipeError, ValidationError } from "../utils/errors.js";
+import { NoRecipeError, NoUserError, ValidationError } from "../utils/errors.js";
 import { validateRecipeCreation } from "../utils/utils.js";
 
 
@@ -29,20 +29,7 @@ class RecipeModel {
         return { status: "Success", message: "Recipe was successfully created" };
     }
 
-    async getAllRecipes(searchQuery='') {
-        searchQuery = '%' + searchQuery + '%';
-
-        const text = `SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;`;
-        const values = [searchQuery];
-
-        return await db.query(text, values);
-    }
-
-    async getAllRecipesWithLiked(userId, searchQuery='') {
-        if (!userId) {
-            throw new ValidationError("Missing userId");
-        }
-
+    async getAllRecipes(userId, searchQuery='') {
         searchQuery = '%' + searchQuery + '%';
 
         const likesValues = [userId];
@@ -52,26 +39,30 @@ class RecipeModel {
         const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
 
         const recipes = await db.query(recipesText, recipesValues);
-        const likes = await db.query(likesText, likesValues);
+        let likes;
+        if (userId) {
+            likes = await db.query(likesText, likesValues);
+        }
 
-        return { recipes: recipes.rows, likes: likes.rows };
+        return { recipes: recipes.rows, likes: (likes?.rows || []) };
     }
 
-    async toggleLike(userId, recipeId, likeState) {
-        if (!userId || !recipeId || likeState === undefined) {
-            throw new ValidationError("Missing required data");
-        }
+    async addLike(userId, recipeId) {
+        await this._validateLike(userId, recipeId);
 
         const values = [userId, recipeId];
-        let text;
-        if (likeState === true) {
-            text = 'DELETE FROM likes WHERE user_id = $1 AND recipe_id = $2 RETURNING user_id, recipe_id;'
-        }
-        else {
-            text = 'INSERT INTO likes(user_id, recipe_id) VALUES ($1, $2) RETURNING user_id, recipe_id;'
-        }
+        const text = 'INSERT INTO likes(user_id, recipe_id) VALUES ($1, $2) RETURNING user_id, recipe_id;'
 
-        return await db.query(text, values);
+        return db.query(text, values);
+    }
+
+    async removeLike(userId, recipeId) {
+        await this._validateLike(userId, recipeId);
+
+        const values = [userId, recipeId];
+        const text = 'DELETE FROM likes WHERE user_id = $1 AND recipe_id = $2 RETURNING user_id, recipe_id;';
+
+        return db.query(text, values);
     }
 
     async getRecipeById(recipeId) {
@@ -113,20 +104,22 @@ class RecipeModel {
         return !!result.rows.length;
     }
 
-    async getRecipesByUserId(userId) {
+    async getRecipesByUserId(userId, currentUserId) {
         if (!userId) {
             throw new ValidationError("Missing required data");
         }
 
-        const values = [userId];
-        const text = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+        const user = await this._checkUser(userId);
 
-        return await db.query(text, values);
-    }
+        if (!user.rows.length) {
+            throw new NoUserError(`There is no user with id: ${userid}`);
+        }
 
-    async getRecipesByUserIdWithLikes(userId, currentUserId) {
-        if (!userId || !currentUserId) {
-            throw new ValidationError("Missing required data");
+        if (currentUserId) {
+            const currentUser = await this._checkUser(currentUserId);
+            if (!currentUser.rows.length) {
+                throw new NoUserError(`There is no user with id: ${userId}`);
+            }
         }
 
         const likesValues = [currentUserId];
@@ -136,9 +129,12 @@ class RecipeModel {
         const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
 
         const recipes = await db.query(recipesText, recipesValues);
-        const likes = await db.query(likesText, likesValues);
+        let likes;
+        if (currentUserId) {
+            likes = await db.query(likesText, likesValues);
+        }
 
-        return { recipes: recipes.rows, likes: likes.rows };
+        return { recipes: recipes.rows, likes: (likes?.rows || []) };
     }
 
     async getRecipesLikedByUser(userId) {
@@ -146,10 +142,47 @@ class RecipeModel {
             throw new ValidationError("Missing required data");
         }
 
+        const user = await this._checkUser(userId);
+        if (!user.rows.length) {
+            throw new NoUserError(`There is no user with id: ${userId}`);
+        }
+
         const values = [userId];
         const text = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id IN (SELECT l2.recipe_id FROM likes l2 WHERE l2.user_id = $1) GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
 
         return await db.query(text, values);
+    }
+
+    _checkUser(userId) {
+        const values = [userId];
+        const text = 'SELECT id FROM users WHERE id = $1;';
+
+        return db.query(text, values);
+    }
+
+    _checkRecipe(recipeId) {
+        const values = [recipeId];
+        const text = 'SELECT id FROM recipes WHERE id = $1;';
+
+        return db.query(text, values);
+    }
+
+    async _validateLike(userId, recipeId) {
+        if (!userId || !recipeId) {
+            throw new ValidationError("Missing required data");
+        }
+
+        const user = await this._checkUser(userId);
+
+        if (!user.rows.length) {
+            throw new NoUserError(`There is no user with id: ${userId}`);
+        }
+
+        const recipe = await this._checkRecipe(recipeId);
+
+        if (!recipe.rows.length) {
+            throw new NoRecipeError(`There is no recipe with id: ${recipeId}`);
+        }
     }
 }
 

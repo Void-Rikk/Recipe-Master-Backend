@@ -1,5 +1,5 @@
 import RecipeModel from "../models/recipe-model.js";
-import { NoRecipeError, ValidationError } from "../utils/errors.js";
+import { NoRecipeError, NoUserError, ValidationError } from "../utils/errors.js";
 
 
 class RecipeController {
@@ -24,75 +24,62 @@ class RecipeController {
     }
 
     async getAll(req, res) {
-        try {
-            const result = await RecipeModel.getAllRecipes();
-            return res.status(200).json(result.rows);
-        }
-        catch (e) {
-            return res.status(500).json("Internal server error");
-        }
-    }
-
-    async getAllWithLikes(req, res) {
-        const { userId } = req.params;
+        const { userId } = req.query;
 
         try {
-            const result = await RecipeModel.getAllRecipesWithLiked(userId);
+            const result = await RecipeModel.getAllRecipes(userId);
 
             const likesMap = this._createLikesMap(result.likes);
 
             return res.status(200).json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
-            if (e instanceof ValidationError) {
-                return res.status(400).json({ error: e.message });
-            }
             return res.status(500).json({ error: "Internal server error" });
         }
     }
 
-    async toggleLike(req, res) {
-        const { userId, recipeId, likeState } = req.body;
+    async addLike(req, res) {
+        const { userId, recipeId } = req.params;
 
         try {
-            const result = await RecipeModel.toggleLike(userId, recipeId, likeState);
-            return res.status(200).json({ ...result, likeState: !likeState});
+            await RecipeModel.addLike(userId, recipeId);
+            return res.status(200).json({ status: "success" });
         }
         catch (e) {
-            if (e instanceof ValidationError) {
+            if (e instanceof ValidationError || e instanceof NoRecipeError || e instanceof  NoUserError) {
                 return res.status(400).json({ error: e.message });
             }
-            return res.status(500).json({ error: "Internal server error" });
+            return res.status(500).json({ error: e.message });
+        }
+    }
+
+    async removeLike(req, res) {
+        const { userId, recipeId } = req.params;
+
+        try {
+            await RecipeModel.removeLike(userId, recipeId);
+            return res.status(200).json({ status: "success" });
+        }
+        catch (e) {
+            if (e instanceof ValidationError || e instanceof NoRecipeError || e instanceof  NoUserError) {
+                return res.status(400).json({ error: e.message });
+            }
+            return res.status(500).json({ error: e.message });
         }
     }
 
     async searchRecipes(req, res) {
-        const { searchQuery } = req.body;
+        const { query } = req.params;
+        const { userId } = req.query;
 
         try {
-            const result = await RecipeModel.getAllRecipes(searchQuery);
-            return res.status(200).json(result.rows);
-        }
-        catch (e) {
-            return res.status(400).json({ error: e.message });
-        }
-    }
-
-    async searchRecipesWithLikes(req, res) {
-        const { searchQuery } = req.body;
-        const { userId } = req.params;
-
-        try {
-            const result = await RecipeModel.getAllRecipesWithLiked(userId, searchQuery);
+            const result = await RecipeModel.getAllRecipes(userId, query);
 
             const likesMap = this._createLikesMap(result.likes);
 
             return res.status(200).json({ ...result, likes: likesMap });
         }
         catch (e) {
-            if (e instanceof ValidationError) {
-                return res.status(400).json({ error: e.message });
-            }
             return res.status(500).json({ error: "Internal server error" });
         }
     }
@@ -132,31 +119,17 @@ class RecipeController {
 
     async getRecipesByUserId(req, res) {
         const { userId } = req.params;
+        const { currentUserId } = req.query;
 
         try {
-            const result = await RecipeModel.getRecipesByUserId(userId);
-            return res.status(200).json(result.rows);
-        }
-        catch (e) {
-            if (e instanceof ValidationError) {
-                return res.status(400).json({ error: e.message });
-            }
-            return res.status(500).json({ error: "Internal server error" });
-        }
-    }
-
-    async getRecipesByUserIdWithLikes(req, res) {
-        const { userId, currentUserId } = req.params;
-
-        try {
-            const result = await RecipeModel.getRecipesByUserIdWithLikes(userId, currentUserId);
+            const result = await RecipeModel.getRecipesByUserId(userId, currentUserId);
 
             const likesMap = this._createLikesMap(result.likes);
 
             return res.status(200).json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
-            if (e instanceof ValidationError) {
+            if (e instanceof ValidationError || e instanceof NoUserError) {
                 return res.status(400).json({ error: e.message });
             }
             return res.status(500).json({ error: "Internal server error" });
@@ -171,7 +144,7 @@ class RecipeController {
             return res.status(200).json(result.rows);
         }
         catch (e) {
-            if (e instanceof ValidationError) {
+            if (e instanceof ValidationError || e instanceof NoUserError) {
                 return res.status(400).json({ error: e.message });
             }
             return res.status(500).json({ error: "Internal server error" });

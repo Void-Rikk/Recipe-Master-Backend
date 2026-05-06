@@ -2,19 +2,26 @@ import { Router } from "express";
 import RecipeController from "../controllers/recipe-controller.js";
 import { recipeImages } from "../storage/storage.js";
 
+
 const recipeRouter = new Router();
 
+// Recipe page
+recipeRouter.get("/recipes/:recipeId", RecipeController.getRecipeById);
+recipeRouter.get("/like/:userId/:recipeId", RecipeController.getExactLikeState);
 
-recipeRouter.get("/getRecipe/:recipeId", RecipeController.getRecipeById);
-recipeRouter.get("/getRecipes", RecipeController.getAll);
-recipeRouter.get("/getRecipes/:userId", RecipeController.getAllWithLikes.bind(RecipeController));
-recipeRouter.get("/getLikeState/:userId/:recipeId", RecipeController.getExactLikeState);
-recipeRouter.get("/getRecipesByUserId/:userId", RecipeController.getRecipesByUserId);
-recipeRouter.get("/getRecipesByUserIdWithLikes/:userId/:currentUserId", RecipeController.getRecipesByUserIdWithLikes.bind(RecipeController));
-recipeRouter.get("/getRecipesLikedByUser/:userId", RecipeController.getRecipesLikedByUser);
-recipeRouter.post("/toggleLike", RecipeController.toggleLike);
-recipeRouter.post("/searchRecipes", RecipeController.searchRecipes);
-recipeRouter.post("/searchRecipes/:userId", RecipeController.searchRecipesWithLikes.bind(RecipeController));
-recipeRouter.post("/createRecipe", recipeImages.single("image"), RecipeController.create);
+// Home page
+recipeRouter.get("/recipes", RecipeController.getAll.bind(RecipeController));
+recipeRouter.get("/recipes/search/:query", RecipeController.searchRecipes.bind(RecipeController));
+
+// User page
+recipeRouter.get("/recipes/user/:userId", RecipeController.getRecipesByUserId.bind(RecipeController));
+recipeRouter.get("/recipes/user/:userId/liked", RecipeController.getRecipesLikedByUser);
+
+// General
+recipeRouter.post("/like/:userId/:recipeId", RecipeController.addLike);
+recipeRouter.delete("/like/:userId/:recipeId", RecipeController.removeLike);
+
+// Create recipe page
+recipeRouter.post("/recipes/create", recipeImages.single("image"), RecipeController.create);
 
 export default recipeRouter;
