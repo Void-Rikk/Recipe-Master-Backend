@@ -26,8 +26,6 @@ class RecipeController {
     async getAll(req, res) {
         const { userId } = req.query;
 
-        console.log("getAll method");
-
         try {
             const result = await RecipeModel.getAllRecipes(userId);
 
@@ -36,7 +34,6 @@ class RecipeController {
             return res.status(200).json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
-            console.log(e.message);
             return res.status(500).json({ error: "Internal server error" });
         }
     }
