@@ -2,5 +2,13 @@
 node_modules
 .env
 
-static/recipe-images/*
-static/user-avatars/*
+static/recipe-images/*.jpg
+static/recipe-images/*.webp
+static/recipe-images/*.png
+static/recipe-images/*.jpeg
+static/recipe-images/*.avif
+static/user-avatars/*.jpg
+static/user-avatars/*.webp
+static/user-avatars/*.png
+static/user-avatars/*.jpeg
+static/user-avatars/*.avif
