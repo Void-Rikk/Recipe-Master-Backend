@@ -31,7 +31,6 @@ class RecipeModel {
 
     async getAllRecipes(userId, searchQuery='') {
         searchQuery = '%' + searchQuery + '%';
-
         const likesValues = [userId];
         const likesText = 'SELECT recipe_id FROM likes WHERE user_id = $1';
 
