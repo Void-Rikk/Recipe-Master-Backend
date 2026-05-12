@@ -37,6 +37,7 @@ class RecipeModel {
         const recipesValues = [searchQuery];
         const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
 
+        console.log("before query");
         const recipes = await db.query(recipesText, recipesValues);
         let likes;
         if (userId) {
