@@ -35,3 +35,7 @@ export function validateUserUpdate(userId, first_name, last_name, bio, image_id,
         throw new ValidationError("Missing required fields");
     }
 }
+
+export function getQueryOffset(limit, portion) {
+    return limit * (portion - 1);
+}

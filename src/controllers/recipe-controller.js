@@ -24,14 +24,18 @@ class RecipeController {
     }
 
     async getAll(req, res) {
-        const { userId } = req.query;
+        const { userId, limit, portion } = req.query;
 
         try {
-            const result = await RecipeModel.getAllRecipes(userId);
+            const result = await RecipeModel.getAllRecipes(userId, "", +limit, +portion);
 
             const likesMap = this._createLikesMap(result.likes);
 
-            return res.status(200).json({ recipes: result.recipes, likes: likesMap });
+            return res
+                .status(200)
+                .set("X-Total-Recipes", result.recipesCount)
+                .set("Access-Control-Expose-Headers", "X-Total-Recipes")
+                .json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
             return res.status(500).json({ error: "Internal server error" });

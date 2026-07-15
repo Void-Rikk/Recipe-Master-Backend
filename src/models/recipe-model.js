@@ -1,6 +1,6 @@
 import { db } from "../db/db.js";
 import { NoRecipeError, NoUserError, ValidationError } from "../utils/errors.js";
-import { validateRecipeCreation } from "../utils/utils.js";
+import { getQueryOffset, validateRecipeCreation } from "../utils/utils.js";
 
 
 class RecipeModel {
@@ -29,21 +29,24 @@ class RecipeModel {
         return { status: "Success", message: "Recipe was successfully created" };
     }
 
-    async getAllRecipes(userId, searchQuery='') {
+    async getAllRecipes(userId, searchQuery='', limit, portion) {
         searchQuery = '%' + searchQuery + '%';
         const likesValues = [userId];
         const likesText = 'SELECT recipe_id FROM likes WHERE user_id = $1';
 
-        const recipesValues = [searchQuery];
-        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+        const recipesValues = [searchQuery, getQueryOffset(limit, portion), limit];
+        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.name ILIKE $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC OFFSET $2 LIMIT $3;';
+
+        const recipesCountText = 'SELECT COUNT(*)::INT AS recipes_count FROM recipes;';
 
         const recipes = await db.query(recipesText, recipesValues);
         let likes;
         if (userId) {
             likes = await db.query(likesText, likesValues);
         }
+        const recipesCount = await db.query(recipesCountText);
 
-        return { recipes: recipes.rows, likes: (likes?.rows || []) };
+        return { recipes: recipes.rows, likes: (likes?.rows || []), recipesCount: recipesCount.rows[0].recipes_count };
     }
 
     async addLike(userId, recipeId) {
