@@ -73,14 +73,19 @@ class RecipeController {
     }
 
     async searchRecipes(req, res) {
+        const { limit, portion } = req.query;
         const { searchQuery, userId } = req.body;
 
         try {
-            const result = await RecipeModel.getAllRecipes(userId, searchQuery);
+            const result = await RecipeModel.getAllRecipes(userId, searchQuery, +limit, +portion);
 
             const likesMap = this._createLikesMap(result.likes);
 
-            return res.status(200).json({ ...result, likes: likesMap });
+            return res
+                .status(200)
+                .set("X-Total-Recipes", result.recipesCount)
+                .set("Access-Control-Expose-Headers", "X-Total-Recipes")
+                .json({ ...result, likes: likesMap });
         }
         catch (e) {
             return res.status(500).json({ error: "Internal server error" });
