@@ -127,14 +127,18 @@ class RecipeController {
 
     async getRecipesByUserId(req, res) {
         const { userId } = req.params;
-        const { currentUserId } = req.query;
+        const { currentUserId, limit, portion } = req.query;
 
         try {
-            const result = await RecipeModel.getRecipesByUserId(userId, currentUserId);
+            const result = await RecipeModel.getRecipesByUserId(userId, currentUserId, +limit, +portion);
 
             const likesMap = this._createLikesMap(result.likes);
 
-            return res.status(200).json({ recipes: result.recipes, likes: likesMap });
+            return res
+                .status(200)
+                .set("X-Total-Recipes", result.recipesCount)
+                .set("Access-Control-Expose-Headers", "X-Total-Recipes")
+                .json({ recipes: result.recipes, likes: likesMap });
         }
         catch (e) {
             if (e instanceof ValidationError || e instanceof NoUserError) {
@@ -146,10 +150,14 @@ class RecipeController {
 
     async getRecipesLikedByUser(req, res) {
         const { userId } = req.params;
+        const { limit, portion } = req.query;
 
         try {
-            const result = await RecipeModel.getRecipesLikedByUser(userId);
-            return res.status(200).json(result.rows);
+            const result = await RecipeModel.getRecipesLikedByUser(userId, +limit, +portion);
+            return res.status(200)
+                .set("X-Total-Recipes", result.recipesAmount)
+                .set("Access-Control-Expose-Headers", "X-Total-Recipes")
+                .json(result.recipes);
         }
         catch (e) {
             if (e instanceof ValidationError || e instanceof NoUserError) {

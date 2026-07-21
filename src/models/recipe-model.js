@@ -107,7 +107,7 @@ class RecipeModel {
         return !!result.rows.length;
     }
 
-    async getRecipesByUserId(userId, currentUserId) {
+    async getRecipesByUserId(userId, currentUserId, limit, portion) {
         if (!userId) {
             throw new ValidationError("Missing required data");
         }
@@ -128,8 +128,12 @@ class RecipeModel {
         const likesValues = [currentUserId];
         const likesText = 'SELECT recipe_id FROM likes WHERE user_id = $1';
 
-        const recipesValues = [userId];
-        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+        const recipesValues = [userId, getQueryOffset(limit, portion), limit];
+        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE u.id = $1 GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC OFFSET $2 LIMIT $3;';
+
+
+        const recipesCountValues = [userId];
+        const recipesCountText = 'SELECT COUNT(*) as recipes_count FROM recipes r WHERE r.user_id = $1;';
 
         const recipes = await db.query(recipesText, recipesValues);
         let likes;
@@ -137,10 +141,12 @@ class RecipeModel {
             likes = await db.query(likesText, likesValues);
         }
 
-        return { recipes: recipes.rows, likes: (likes?.rows || []) };
+        const recipesCount = await db.query(recipesCountText, recipesCountValues);
+
+        return { recipes: recipes.rows, likes: (likes?.rows || []), recipesCount: recipesCount.rows[0].recipes_count };
     }
 
-    async getRecipesLikedByUser(userId) {
+    async getRecipesLikedByUser(userId, limit, portion) {
         if (!userId) {
             throw new ValidationError("Missing required data");
         }
@@ -150,10 +156,17 @@ class RecipeModel {
             throw new NoUserError(`There is no user with id: ${userId}`);
         }
 
-        const values = [userId];
-        const text = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id IN (SELECT l2.recipe_id FROM likes l2 WHERE l2.user_id = $1) GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC;';
+        const recipesValues = [userId, getQueryOffset(limit, portion), limit];
+        const recipesText = 'SELECT r.id, r.name, r.user_id, r.image_id, r.image_extension, u.first_name, u.last_name, COUNT(l.user_id)::INT AS likes_count FROM recipes r JOIN users u ON r.user_id = u.id LEFT JOIN likes l ON r.id = l.recipe_id WHERE r.id IN (SELECT l2.recipe_id FROM likes l2 WHERE l2.user_id = $1) GROUP BY r.id, u.id, r.created_at ORDER BY r.created_at DESC OFFSET $2 LIMIT $3;';
 
-        return await db.query(text, values);
+        const recipesAmountValues = [userId];
+        const recipesAmountText = 'SELECT COUNT(*) as recipes_count FROM recipes r INNER JOIN likes l ON r.id = l.recipe_id AND l.user_id = $1;';
+
+        const recipes = await db.query(recipesText, recipesValues);
+
+        const recipesAmount = await db.query(recipesAmountText, recipesAmountValues);
+
+        return { recipes: recipes.rows, recipesAmount: recipesAmount.rows[0].recipes_count };
     }
 
     _checkUser(userId) {
