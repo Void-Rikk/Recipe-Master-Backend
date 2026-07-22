@@ -1,4 +1,5 @@
 import { ValidationError } from "./errors.js";
+import fs from "fs";
 
 export function validateAuth(first_name, last_name, password) {
     if (!first_name || !last_name || !password) {
@@ -38,4 +39,14 @@ export function validateUserUpdate(userId, first_name, last_name, bio, image_id,
 
 export function getQueryOffset(limit, portion) {
     return limit * (portion - 1);
+}
+
+export function writeFileAsync(path, data) {
+    return new Promise((res, rej) => fs.writeFile(path, data, (err) => {
+        if (err) {
+            rej(err);
+        }
+
+        res("File has been written successfully");
+    }));
 }

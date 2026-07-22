@@ -1,6 +1,7 @@
 import { db } from "../db/db.js";
 import { NoRecipeError, NoUserError, ValidationError } from "../utils/errors.js";
 import { getQueryOffset, validateRecipeCreation } from "../utils/utils.js";
+import { autocomplete, saver } from "../autocomplete/autocomplete.js";
 
 
 class RecipeModel {
@@ -26,6 +27,11 @@ class RecipeModel {
 
         await db.query(ingredientsText, ingredientsValues);
         await db.query(instructionsText, instructionsValues);
+
+        autocomplete.insert(name.toLowerCase());
+
+        saver.emit("save");
+
         return { status: "Success", message: "Recipe was successfully created" };
     }
 
@@ -167,6 +173,10 @@ class RecipeModel {
         const recipesAmount = await db.query(recipesAmountText, recipesAmountValues);
 
         return { recipes: recipes.rows, recipesAmount: recipesAmount.rows[0].recipes_count };
+    }
+
+    async getAutocomplete() {
+        return autocomplete;
     }
 
     _checkUser(userId) {

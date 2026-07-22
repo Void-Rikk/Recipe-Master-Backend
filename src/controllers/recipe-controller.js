@@ -167,6 +167,19 @@ class RecipeController {
         }
     }
 
+    async getAutocomplete(req, res) {
+
+        try {
+            const result = await RecipeModel.getAutocomplete();
+            return res
+                .status(200)
+                .json(result);
+        }
+        catch (e) {
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
     _createLikesMap(likes) {
         const likesMap = {};
         likes.forEach(row => {

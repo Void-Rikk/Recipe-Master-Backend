@@ -8,6 +8,7 @@ const recipeRouter = new Router();
 
 // Home page
 recipeRouter.get("/recipes", RecipeController.getAll.bind(RecipeController));
+recipeRouter.get("/recipes/autocomplete", RecipeController.getAutocomplete);
 recipeRouter.post("/recipes/search", RecipeController.searchRecipes.bind(RecipeController));
 
 // Recipe page
