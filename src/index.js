@@ -5,12 +5,18 @@ import recipeRouter from "./routers/recipe-router.js";
 import authRouter from "./routers/auth-router.js";
 import commentsRouter from "./routers/comments-router.js";
 import userRouter from "./routers/user-router.js";
+import { delay } from "./middlewares/index.js";
 
 dotenv.config();
 
 const PORT = process.env.PORT;
+const isDev = process.env.DEV;
 
 const app = express();
+
+if (isDev) {
+    app.use(delay(500));
+}
 
 app.use(cors());
 app.use(express.json());
